@@ -30,7 +30,7 @@ The broker instance is initialized with a `signer`. This signer is an instance t
 import { createZGServingNetworkBroker } from "@0glabs/0g-serving-broker";
 
 /**
- * createZGServingNetworkBroker is used to initialize ZGServingUserBroker
+ * 'createZGServingNetworkBroker' is used to initialize ZGServingUserBroker
  *
  * @param signer - A signer that implements the 'JsonRpcSigner' or 'Wallet' interface from the ethers package.
  * @param contractAddress - 0G Serving contract address, use default address if not provided.
@@ -46,7 +46,7 @@ const broker = await createZGServingNetworkBroker(signer);
 
 ```typescript
 /**
- * Retrieves a list of services from the contract.
+ * 'listService' retrieves a list of services from the contract.
  *
  * @returns {Promise<ServiceStructOutput[]>} A promise that resolves to an array of ServiceStructOutput objects.
  * @throws An error if the service list cannot be retrieved.
@@ -73,10 +73,10 @@ Before using the provider's services, you need to create an account specifically
 
 ```typescript
 /**
- * Adds a new account to the contract.
+ * 'addAccount' creates a new account in the contract.
  *
  * @param providerAddress - The address of the provider for whom the account is being created.
- * @param balance - The initial balance to be assigned to the new account.
+ * @param balance - The initial balance to be assigned to the new account. The unit is A0GI.
  *
  * @throws  An error if the account creation fails.
  */
@@ -87,10 +87,10 @@ await broker.addAccount(providerAddress, balance);
 
 ```typescript
 /**
- * Deposits a specified amount of funds into the given account.
+ * 'depositFund' deposits a specified amount of funds into an existing account.
  *
  * @param {string} account - The account identifier where the funds will be deposited.
- * @param {string} amount - The amount of funds to be deposited.
+ * @param {string} amount - The amount of funds to be deposited. The unit is A0GI.
  *
  * @throws  An error if the deposit fails.
  */
@@ -103,19 +103,19 @@ await broker.depositFund(providerAddress, amount);
 
 ```typescript
 /**
- * Generates request metadata for the provider service.
+ * 'getServiceMetadata' returns metadata for the provider service.
  * Includes:
- * 1. Request endpoint for the provider service
+ * 1. Service endpoint of the provider service
  * 2. Model information for the provider service
  *
  * @param providerAddress - The address of the provider.
- * @param svcName - The name of the service.
+ * @param serviceName - The name of the service.
  *
  * @returns { endpoint, model } - Object containing endpoint and model.
  *
  * @throws An error if errors occur during the processing of the request.
  */
-const { endpoint, model } = await broker.getRequestMetadata(
+const { endpoint, model } = await broker.getServiceMetadata(
   providerAddress,
   serviceName
 );
@@ -125,7 +125,7 @@ const { endpoint, model } = await broker.getRequestMetadata(
 
 ```typescript
 /**
- * getRequestHeaders generates billing-related headers for the request
+ * 'getRequestHeaders' generates billing-related headers for the request
  * when the user uses the provider service.
  *
  * In the 0G Serving system, a request with valid billing headers
@@ -151,6 +151,8 @@ const headers = await broker.getRequestHeaders(
 
 After obtaining the `endpoint`, `model`, and `headers`, you can use client SDKs
 compatible with the OpenAI interface to make requests.
+
+_Note_: After receiving the response, you need to use `processResponse` as demonstrated in step 5.4 to settle the fee of the response. Otherwise, subsequent requests will be denied due to unpaid fees. If this occurs, you can use `settleFee` as demonstrated in step 5.5 to settle the fee manually. The amount owed will be indicated in the error message.
 
 ```typescript
 /**
@@ -192,10 +194,10 @@ await fetch(`${endpoint}/chat/completions`, {
 
 ```typescript
 /**
- * processResponse is used after the user successfully obtains a response from the provider service.
+ * 'processResponse' is used after the user successfully obtains a response from the provider service.
  *
  * It will settle the fee for the response content. Additionally, if the service is verifiable,
- * input the chat ID from the response and processResponse will determine the validity of the
+ * input the chat ID from the response and 'processResponse' will determine the validity of the
  * returned content by checking the provider service's response and corresponding signature associated
  * with the chat ID.
  *
@@ -223,16 +225,16 @@ const valid = await broker.processResponse(
 
 ```typescript
 /**
- * settleFee is used to settle the fee for the provider service.
+ * 'settleFee' is used to settle the fee for the provider service.
  *
- * Normally, the fee for each request will be automatically settled in processResponse.
- * However, if processResponse fails due to network issues or other reasons,
- * you can manually call settleFee to settle the fee. The unit of the fee is neuron.
- * 1 A0GI = 1e18 neuron.
+ * Normally, the fee for each request will be automatically settled in 'processResponse'.
+ * However, if 'processResponse' fails due to network issues or other reasons,
+ * you can manually call settleFee to settle the fee.
  *
  * @param providerAddress - The address of the provider.
- * @param svcName - The name of the service.
- * @param fee - The fee to be settled.
+ * @param serviceName - The name of the service.
+ * @param fee - The fee to be settled. The unit is neuron. 1 A0GI = 1e18 neuron.
+ * To accommodate large values, it needs to use string type, e.g. '1000'.
  *
  * @returns A promise that resolves when the fee settlement is successful.
  *
